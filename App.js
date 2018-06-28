@@ -1,7 +1,7 @@
 //@flow
 
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { reader, keyword } from "transit-js";
 import domain from "./domain";
 import emoji from "./emoji";
@@ -24,7 +24,7 @@ function emojisForRow(row, count) {
 export default class App extends React.Component {
   constructor() {
     super();
-    this.state = { grid: { width: 0, height: 0 } };
+    this.state = { fontSize: 0, grid: { width: 0, height: 0 } };
   }
   componentDidMount() {
     fetch("http://127.0.0.1:3000/api", {
@@ -74,22 +74,26 @@ export default class App extends React.Component {
           {times(height).map(row =>
             times(width).map(col => (
               <View
-                style={{
-                  flexBasis: "25%",
-                  ...border("blue"),
-                  backgroundColor: ["#9ccc65", "#ffa726", "#fdd835", "#29b6f6"][
-                    row
-                  ]
-                }}
+                style={[
+                  styles.cell,
+                  {
+                    backgroundColor: [
+                      "#9ccc65",
+                      "#ffa726",
+                      "#fdd835",
+                      "#29b6f6"
+                    ][row]
+                  }
+                ]}
                 key={`cell-${row}-${col}`}
               >
                 {emojisForRow(row, width).map(({ name, char }) => (
-                  <Text
-                    style={{ textAlign: "center", ...border("green"), flex: 2 }}
+                  <TouchableOpacity
+                    style={styles.emojiButon}
                     key={`emoji-${name}`}
                   >
-                    {char}
-                  </Text>
+                    <Text>{char}</Text>
+                  </TouchableOpacity>
                 ))}
               </View>
             ))
@@ -108,19 +112,37 @@ const border = borderColor => ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
     alignItems: "center",
-    justifyContent: "center",
-    ...border("red")
+    backgroundColor: "#fff",
+    flex: 1,
+    justifyContent: "center"
   },
   header: { flex: 3 },
   grid: {
     alignContent: "stretch",
-    ...border("yellow"),
+    borderColor: "#ddd",
+    borderLeftWidth: 6,
+    borderStyle: "solid",
+    borderTopWidth: 6,
     flex: 7,
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "center"
+  },
+  cell: {
+    alignContent: "stretch",
+    borderBottomWidth: 6,
+    borderColor: "#ddd",
+    borderRightWidth: 6,
+    borderStyle: "solid",
+    flexBasis: "25%",
+    flexDirection: "row",
+    flexWrap: "wrap"
+  },
+  emojiButon: {
+    alignItems: "center",
+    flex: 1,
+    flexBasis: "50%",
     justifyContent: "center"
   }
 });
