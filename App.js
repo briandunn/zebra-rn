@@ -65,12 +65,19 @@ export default class App extends React.Component {
         this.setState(parse(text));
       });
   }
+  onEmojiButtonLayout = ({ nativeEvent: { layout: { width, height } } }) => {
+    this.setState({ gridWidth: width });
+  };
   render() {
+    console.log(this.state.gridWidth);
     const { grid: { width, height } } = this.state;
     return (
       <View style={styles.container}>
         <View style={styles.header} />
-        <View style={styles.grid}>
+        <View
+          style={[styles.grid, { height: this.state.gridWidth }]}
+          onLayout={this.onEmojiButtonLayout}
+        >
           {times(height).map(row =>
             times(width).map(col => (
               <View
@@ -124,7 +131,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 6,
     borderStyle: "solid",
     borderTopWidth: 6,
-    flex: 7,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center"
