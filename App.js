@@ -65,18 +65,18 @@ export default class App extends React.Component {
         this.setState(parse(text));
       });
   }
-  onEmojiButtonLayout = ({ nativeEvent: { layout: { width, height } } }) => {
-    this.setState({ gridWidth: width });
+  onGridLayout = ({ nativeEvent: { layout: { width, height } } }) => {
+    this.setState({ frameWidth: width });
   };
   render() {
-    console.log(this.state.gridWidth);
-    const { grid: { width, height } } = this.state;
+    const { grid: { width, height }, frameWidth } = this.state;
+    const fontSize = 32;
     return (
       <View style={styles.container}>
         <View style={styles.header} />
         <View
-          style={[styles.grid, { height: this.state.gridWidth }]}
-          onLayout={this.onEmojiButtonLayout}
+          style={[styles.grid, { height: frameWidth }]}
+          onLayout={this.onGridLayout}
         >
           {times(height).map(row =>
             times(width).map(col => (
@@ -99,7 +99,7 @@ export default class App extends React.Component {
                     style={styles.emojiButon}
                     key={`emoji-${name}`}
                   >
-                    <Text>{char}</Text>
+                    <Text style={{ fontSize }}>{char}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -122,7 +122,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     flex: 1,
-    justifyContent: "center"
+    justifyContent: "center",
+    padding: 20
   },
   header: { flex: 3 },
   grid: {
