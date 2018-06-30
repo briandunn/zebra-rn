@@ -25,7 +25,14 @@ function parse(body) {
   const grid = get(puzzle, "grid");
   const [height, width] = ["height", "width"].map(k => get(grid, k));
   const options = buildOptions(height, width);
-  return { grid: { height, width }, options };
+  const clues = Set(get(puzzle, "clues")).map(clue =>
+    Map({
+      type: clue.get(keyword("clue/type")).name(),
+      args: clue.get(keyword("clue/args"))
+    })
+  );
+
+  return { clues, grid: { height, width }, options };
 }
 
 function emojisForRow(row, count) {
