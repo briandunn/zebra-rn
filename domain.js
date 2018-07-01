@@ -1,4 +1,6 @@
-export default [
+import emoji from "./emoji";
+
+const domain = [
   [
     "tenant",
     [
@@ -65,3 +67,10 @@ export default [
     ]
   ]
 ];
+
+export default function emojisForRow(row) {
+  return domain[row][1].map((name, i) => ({
+    i,
+    char: String.fromCodePoint(emoji[name])
+  }));
+}

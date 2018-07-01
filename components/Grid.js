@@ -1,17 +1,10 @@
 //@flow
 
 import React from "react";
-import domain from "../domain";
-import emoji from "../emoji";
+import emojisForRow from "../domain";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { reader, keyword } from "transit-js";
 import { List } from "immutable";
-
-function emojisForRow(row, count) {
-  return domain[row][1]
-    .slice(0, count)
-    .map((name, i) => ({ i, char: String.fromCodePoint(emoji[name]) }));
-}
 
 const times = n => [...Array(n)].map((_, i) => i);
 
@@ -55,7 +48,8 @@ export default class Grid extends React.Component {
               ]}
               key={`cell-${row}-${col}`}
             >
-              {emojisForRow(row, width)
+              {emojisForRow(row)
+                .slice(0, width)
                 .filter(this.isOptionAvailable(row, col))
                 .map(({ i, char }) => (
                   <TouchableOpacity
