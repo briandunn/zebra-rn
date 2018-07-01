@@ -43,7 +43,8 @@ export default class Grid extends React.Component {
                 {
                   backgroundColor: ["#9ccc65", "#ffa726", "#fdd835", "#29b6f6"][
                     row
-                  ]
+                  ],
+                  flexBasis: `${1 / width * 100}%`
                 }
               ]}
               key={`cell-${row}-${col}`}
@@ -85,7 +86,6 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRightWidth: 6,
     borderStyle: "solid",
-    flexBasis: "25%",
     flexDirection: "row",
     flexWrap: "wrap"
   },

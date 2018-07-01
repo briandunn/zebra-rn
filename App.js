@@ -22,11 +22,17 @@ const buildOptions = (height, width) =>
 function applyInHouse(options, inHouse) {
   const map = inHouse.reduce(
     (map, clue) =>
-      map.set(List(clue.get("args")[0]), List([clue.get("args")[1]])),
+      map.set(List(clue.get("args")[0]), Set([clue.get("args")[1]])),
     Map()
   );
   return options.map((opts, args) => map.get(List(args), opts));
 }
+
+const parseSolution = solution =>
+  [...solution.keys()].reduce(
+    (map, key) => map.set(List(key), Set([solution.get(key)])),
+    Map()
+  );
 
 function parse(body) {
   const data = reader().read(body);
@@ -50,7 +56,14 @@ function parse(body) {
 
   const options = applyInHouse(buildOptions(height, width), inHouse);
 
-  return { clues: otherClues, grid: { height, width }, options };
+  const solution = parseSolution(get(puzzle, "solution"));
+
+  return {
+    clues: otherClues,
+    grid: { height, width },
+    options,
+    solution
+  };
 }
 
 export default class App extends React.Component {
@@ -63,7 +76,7 @@ export default class App extends React.Component {
     };
   }
   componentDidMount() {
-    fetch("http://127.0.0.1:3000/api", {
+    fetch("https://zebra.joshuadavey.com/api", {
       method: "POST",
       headers: { "Content-Type": "application/transit+json" },
       body: JSON.stringify([
@@ -103,10 +116,20 @@ export default class App extends React.Component {
   }
 
   onClickOption = (row, col, i) => {
-    this.setState(({ options, ...state }) => ({
-      ...state,
-      options: options.update(List([row, col]), opts => opts.delete(i))
-    }));
+    this.setState(
+      ({ options, ...state }) => ({
+        ...state,
+        options: options.update(
+          List([row, col]),
+          opts => (opts.count() === 1 ? opts : opts.delete(i))
+        )
+      }),
+      () => {
+        const { solution, options } = this.state;
+        if (solution.equals(options))
+          console.warn("winner");
+      }
+    );
   };
 
   render() {
