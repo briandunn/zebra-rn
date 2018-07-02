@@ -124,19 +124,32 @@ export default class App extends React.Component {
   }
 
   onClickOption = (row, col, i) => {
-    this.setState(
-      ({ options, ...state }) => ({
-        ...state,
-        options: options.update(
+    this.setState(({ solution, options, ...state }) => {
+      const updatedOptions = (() => {
+        const updated = options.update(
           List([row, col]),
           opts => (opts.count() === 1 ? opts : opts.delete(i))
-        )
-      }),
-      () => {
-        const { solution, options } = this.state;
-        if (solution.equals(options)) console.warn("winner");
-      }
-    );
+        );
+
+        const cell = updated.get(List([row, col]));
+
+        if (cell.count() === 1) {
+          return updated.map(
+            (opts, key) =>
+              key.get(0) === row && key.get(1) !== col
+                ? opts.filter(opt => cell.first() !== opt)
+                : opts
+          );
+        } else return updated;
+      })();
+
+      return {
+        ...state,
+        solution,
+        won: solution.equals(updatedOptions),
+        options: updatedOptions
+      };
+    });
   };
 
   render() {
