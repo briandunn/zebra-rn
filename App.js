@@ -4,47 +4,45 @@ import Grid from "./components/Grid";
 import Clue from "./components/Clue";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { reader, keyword } from "transit-js";
+import t from "transit-js";
 import { fromJS, List, Map, Set } from "immutable";
 
-const times = n => [...Array(n)].map((_, i) => i);
-
-const buildOptions = (height, width) =>
-  times(height).reduce(
-    (map, y) =>
-      times(width).reduce(
-        (m, x) => m.set(List([x, y]), Set(times(width))),
-        map
-      ),
-    Map()
-  );
-
-function applyInHouse(options, inHouse) {
-  const map = inHouse.reduce(
-    (map, clue) =>
-      map.set(List(clue.get("args")[0]), Set([clue.get("args")[1]])),
-    Map()
-  );
-  return options.map((opts, args) => map.get(List(args), opts));
-}
-
-const parseSolution = solution =>
-  [...solution.keys()].reduce(
-    (map, key) => map.set(List(key), Set([solution.get(key)])),
-    Map()
-  );
-
 function parse(body) {
-  const data = reader().read(body);
-  const get = (m, k) => m.get(keyword(`puzzle/${k}`));
+  const times = n => [...Array(n)].map((_, i) => i);
+  const buildOptions = (height, width) =>
+    times(height).reduce(
+      (map, y) =>
+        times(width).reduce(
+          (m, x) => m.set(List([x, y]), Set(times(width))),
+          map
+        ),
+      Map()
+    );
+
+  function applyInHouse(options, inHouse) {
+    const map = inHouse.reduce(
+      (map, clue) =>
+        map.set(List(clue.get("args")[0]), Set([clue.get("args")[1]])),
+      Map()
+    );
+    return options.map((opts, args) => map.get(List(args), opts));
+  }
+
+  const parseSolution = solution =>
+    [...solution.keys()].reduce(
+      (map, key) => map.set(List(key), Set([solution.get(key)])),
+      Map()
+    );
+  const data = t.reader().read(body);
+  const get = (m, k) => m.get(t.keyword(`puzzle/${k}`));
   const puzzle = get(data, "puzzle");
   const grid = get(puzzle, "grid");
   const [height, width] = ["height", "width"].map(k => get(grid, k));
   const clues = Set(get(puzzle, "clues"))
     .map(clue =>
       Map({
-        type: clue.get(keyword("clue/type")).name(),
-        args: clue.get(keyword("clue/args"))
+        type: clue.get(t.keyword("clue/type")).name(),
+        args: clue.get(t.keyword("clue/args"))
       })
     )
     .groupBy(c => c.get("type"));
@@ -72,42 +70,52 @@ export default class App extends React.Component {
     this.state = {
       clues: Set([]),
       grid: { width: 0, height: 0 },
-      options: Map([])
+      options: Map([]),
+      history: List([])
     };
   }
   componentDidMount() {
+    const body = t
+      .writer()
+      .write([
+        t.list([
+          t.map([
+            t.keyword("puzzle/puzzle"),
+            [t.keyword("puzzle/clues"), t.keyword("puzzle/solution")]
+          ]),
+          t.map([
+            t.keyword("size"),
+            4,
+            t.keyword("clue-weights"),
+            t.map([
+              t.keyword("in-house"),
+              1,
+              t.keyword("left-of"),
+              1,
+              t.keyword("next-to"),
+              1,
+              t.keyword("same-house"),
+              1
+            ]),
+            t.keyword("extra-clues"),
+            1,
+            t.keyword("ensured-clues"),
+            t.map([
+              t.keyword("in-house"),
+              1,
+              t.keyword("left-of"),
+              1,
+              t.keyword("same-house"),
+              1
+            ])
+          ])
+        ])
+      ]);
+
     fetch("https://zebra.joshuadavey.com/api", {
       method: "POST",
       headers: { "Content-Type": "application/transit+json" },
-      body: JSON.stringify([
-        [
-          "~#list",
-          [
-            ["^ ", "~:puzzle/puzzle", ["~:puzzle/clues", "~:puzzle/solution"]],
-            [
-              "^ ",
-              "~:size",
-              4,
-              "~:clue-weights",
-              [
-                "^ ",
-                "~:in-house",
-                1,
-                "~:left-of",
-                1,
-                "~:next-to",
-                1,
-                "~:same-house",
-                1
-              ],
-              "~:extra-clues",
-              1,
-              "~:ensured-clues",
-              ["^ ", "^6", 1, "^9", 1, "^7", 1]
-            ]
-          ]
-        ]
-      ])
+      body
     })
       .then(response => response.text())
       .then(text => {
@@ -126,8 +134,7 @@ export default class App extends React.Component {
       }),
       () => {
         const { solution, options } = this.state;
-        if (solution.equals(options))
-          console.warn("winner");
+        if (solution.equals(options)) console.warn("winner");
       }
     );
   };
@@ -163,5 +170,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20
   },
-  header: {}
+  header: { flexDirection: "row", flexWrap: "wrap", marginBottom: 20 }
 });
