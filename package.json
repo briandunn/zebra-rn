@@ -7,5 +7,9 @@
     "react": "16.3.1",
     "react-native": "https://github.com/expo/react-native/archive/sdk-27.0.0.tar.gz",
     "transit-js": "^0.8.861"
+  },
+  "devDependencies": {
+    "flow-bin": "^0.75.0",
+    "prettier": "1.13.7"
   }
 }

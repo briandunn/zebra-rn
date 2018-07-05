@@ -5,29 +5,10 @@ import Clue from "./components/Clue";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import t from "transit-js";
-import { fromJS, List, Map, Set } from "immutable";
+import { List, Map, Set } from "immutable";
+import Options from './options'
 
 function parse(body) {
-  const times = n => [...Array(n)].map((_, i) => i);
-  const buildOptions = (height, width) =>
-    times(height).reduce(
-      (map, y) =>
-        times(width).reduce(
-          (m, x) => m.set(List([x, y]), Set(times(width))),
-          map
-        ),
-      Map()
-    );
-
-  function applyInHouse(options, inHouse) {
-    const map = inHouse.reduce(
-      (map, clue) =>
-        map.set(List(clue.get("args")[0]), Set([clue.get("args")[1]])),
-      Map()
-    );
-    return options.map((opts, args) => map.get(List(args), opts));
-  }
-
   const parseSolution = solution =>
     [...solution.keys()].reduce(
       (map, key) => map.set(List(key), Set([solution.get(key)])),
@@ -52,26 +33,33 @@ function parse(body) {
     .reduce((list, clues) => list.concat(clues), List())
     .sortBy(c => c.get("type"));
 
-  const options = applyInHouse(buildOptions(height, width), inHouse);
-
   const solution = parseSolution(get(puzzle, "solution"));
 
   return {
     clues: otherClues,
     grid: { height, width },
-    options,
+    options: Options.init(height, width, inHouse),
     solution
   };
 }
 
-export default class App extends React.Component {
+type State = {
+  solution: Map<List<number>, Set<number>>,
+  options: Map<List<number>, Set<number>>,
+  grid: {width: number, height: number},
+  clues: List<Map<string, string>>,
+  won: boolean
+}
+
+export default class App extends React.Component<{}, State> {
   constructor() {
     super();
     this.state = {
-      clues: Set([]),
+      clues: List([]),
       grid: { width: 0, height: 0 },
       options: Map([]),
-      history: List([])
+      solution: Map([]),
+      won: false,
     };
   }
   componentDidMount() {
@@ -123,7 +111,7 @@ export default class App extends React.Component {
       });
   }
 
-  onClickOption = (row, col, i) => {
+  onClickOption = (row: number, col: number, i: number) => {
     this.setState(({ solution, options, ...state }) => {
       const updatedOptions = (() => {
         const updated = options.update(

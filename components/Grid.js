@@ -5,24 +5,32 @@ import emojisForRow from "../domain";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { reader, keyword } from "transit-js";
 import { List } from "immutable";
+import type {Map, Set} from 'immutable';
 
 const times = n => [...Array(n)].map((_, i) => i);
 
-export default class Grid extends React.Component {
-  constructor(props) {
+type Props = {
+  width: number,
+  height: number,
+  options: Map<List<number>, Set<number>>,
+  onClickOption: (number,number,number)=> any
+}
+
+export default class Grid extends React.Component<Props, {frameWidth: number}> {
+  constructor(props: Props) {
     super(props);
     this.state = { frameWidth: 0 };
   }
 
-  onLayout = ({ nativeEvent: { layout: { width, height } } }) => {
+  onLayout = ({ nativeEvent: { layout: { width, height } } }: {nativeEvent: {layout: {width: number, height: number}}}) => {
     this.setState({ frameWidth: width });
   };
 
-  onEmojiPress = (row, col, i) => () => {
+  onEmojiPress = (row: number, col: number, i: number) => () => {
     this.props.onClickOption(row, col, i);
   };
 
-  isOptionAvailable = (row, col) => ({ i }) =>
+  isOptionAvailable = (row: number, col: number) => ({ i }: {i: number}) =>
     this.props.options.get(List([row, col])).includes(i);
 
   render() {
