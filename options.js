@@ -23,6 +23,24 @@ function applyInHouse(options, inHouse) {
 
 export default class Options {
   static init(height, width, inHouse) {
-    return applyInHouse(buildOptions(height,width), inHouse)
+    return applyInHouse(buildOptions(height, width), inHouse);
+  }
+
+  static removeVal(options, row, col, val) {
+    const updated = options.update(
+      List([row, col]),
+      opts => (opts.count() === 1 ? opts : opts.delete(val)),
+    );
+
+    const cell = updated.get(List([row, col]));
+
+    if (cell.count() === 1) {
+      return updated.map(
+        (opts, key) =>
+          key.get(0) === row && key.get(1) !== col
+            ? opts.filter(opt => cell.first() !== opt)
+            : opts,
+      );
+    } else return updated;
   }
 }
