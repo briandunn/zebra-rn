@@ -4,44 +4,9 @@ import Grid from './components/Grid';
 import Clue from './components/Clue';
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import t from 'transit-js';
 import {List, Map, Set} from 'immutable';
 import Options from './options';
-
-function parse(body) {
-  const parseSolution = solution =>
-    [...solution.keys()].reduce(
-      (map, key) => map.set(List(key), Set([solution.get(key)])),
-      Map(),
-    );
-  const data = t.reader().read(body);
-  const get = (m, k) => m.get(t.keyword(`puzzle/${k}`));
-  const puzzle = get(data, 'puzzle');
-  const grid = get(puzzle, 'grid');
-  const [height, width] = ['height', 'width'].map(k => get(grid, k));
-  const clues = Set(get(puzzle, 'clues'))
-    .map(clue =>
-      Map({
-        type: clue.get(t.keyword('clue/type')).name(),
-        args: clue.get(t.keyword('clue/args')),
-      }),
-    )
-    .groupBy(c => c.get('type'));
-
-  const inHouse = clues.get('in-house');
-  const otherClues = List(clues.delete('in-house').values())
-    .reduce((list, clues) => list.concat(clues), List())
-    .sortBy(c => c.get('type'));
-
-  const solution = parseSolution(get(puzzle, 'solution'));
-
-  return {
-    clues: otherClues,
-    grid: {height, width},
-    options: Options.init(height, width, inHouse),
-    solution,
-  };
-}
+import Puzzle from './puzzle';
 
 type State = {
   solution: Map<List<number>, Set<number>>,
@@ -63,52 +28,14 @@ export default class App extends React.Component<{}, State> {
     };
   }
   componentDidMount() {
-    const body = t
-      .writer()
-      .write([
-        t.list([
-          t.map([
-            t.keyword('puzzle/puzzle'),
-            [t.keyword('puzzle/clues'), t.keyword('puzzle/solution')],
-          ]),
-          t.map([
-            t.keyword('size'),
-            4,
-            t.keyword('clue-weights'),
-            t.map([
-              t.keyword('in-house'),
-              1,
-              t.keyword('left-of'),
-              1,
-              t.keyword('next-to'),
-              1,
-              t.keyword('same-house'),
-              1,
-            ]),
-            t.keyword('extra-clues'),
-            1,
-            t.keyword('ensured-clues'),
-            t.map([
-              t.keyword('in-house'),
-              1,
-              t.keyword('left-of'),
-              1,
-              t.keyword('same-house'),
-              1,
-            ]),
-          ]),
-        ]),
-      ]);
-
-    fetch('https://zebra.joshuadavey.com/api', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/transit+json'},
-      body,
-    })
-      .then(response => response.text())
-      .then(text => {
-        this.setState(parse(text));
+    Puzzle.fetch({}).then(({width, height, inHouse, clues, solution}) => {
+      this.setState({
+        clues,
+        grid: {width, height},
+        options: Options.init(height, width, inHouse),
+        solution,
       });
+    });
   }
 
   onClickOption = (row: number, col: number, val: number) => {
