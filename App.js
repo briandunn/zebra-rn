@@ -56,9 +56,11 @@ export default class App extends React.Component<{}, State> {
       clues,
       grid: {width, height},
       options,
+      won
     } = this.state;
     return (
       <View style={styles.container}>
+        {won && <Text>You win, bruh!</Text>}
         <View style={styles.header}>
           {clues.map((clue, i) => (
             <Clue args={clue.get('args')} type={clue.get('type')} key={i} />
