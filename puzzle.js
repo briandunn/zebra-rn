@@ -28,11 +28,15 @@ function parse(body) {
     .reduce((list, clues) => list.concat(clues), List())
     .sortBy(c => c.get('type'));
 
-  const solution = parseSolution(get(puzzle, 'solution'));
+  const solution = List(get(puzzle, 'solution')).reduce(
+    (acc, [k, v]) => acc.set(List(k), Set([v])),
+    Map(),
+  );
 
   return {
     clues: otherClues,
-    height, width,
+    height,
+    width,
     inHouse,
     solution,
   };
@@ -62,6 +66,7 @@ function configToBody({
   const config = {
     size: 4,
     extraClues: 1,
+    ...configuration,
     ensuredClues: {inHouse: 1, leftOf: 1, sameHouse: 1, ...ensuredClues},
     clueWeights: {
       inHouse: 1,
