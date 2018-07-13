@@ -1,11 +1,10 @@
 //@flow
 
 import React from "react";
-import emojisForRow from "../domain";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { reader, keyword } from "transit-js";
 import { List } from "immutable";
-import type {Map, Set} from 'immutable';
+import type { Map, Set } from "immutable";
+import Options from "../options";
 
 const times = n => [...Array(n)].map((_, i) => i);
 
@@ -13,23 +12,26 @@ type Props = {
   width: number,
   height: number,
   options: Map<List<number>, Set<number>>,
-  onClickOption: (number, number, number) => any,
+  onClickOption: (number, number, number) => any
 };
 
-export default class Grid extends React.Component<Props, {frameWidth: number}> {
+export default class Grid extends React.Component<
+  Props,
+  { frameWidth: number }
+> {
   constructor(props: Props) {
     super(props);
-    this.state = {frameWidth: 0};
+    this.state = { frameWidth: 0 };
   }
 
   onLayout = ({
     nativeEvent: {
-      layout: {width, height},
-    },
+      layout: { width, height }
+    }
   }: {
-    nativeEvent: {layout: {width: number, height: number}},
+    nativeEvent: { layout: { width: number, height: number } }
   }) => {
-    this.setState({frameWidth: width});
+    this.setState({ frameWidth: width });
   };
 
   onEmojiPress = (row: number, col: number, i: number) => () => {
@@ -37,41 +39,35 @@ export default class Grid extends React.Component<Props, {frameWidth: number}> {
   };
 
   render() {
-    const {frameWidth} = this.state;
-    const {width, height, options} = this.props;
+    const { frameWidth } = this.state;
+    const { width, height, options } = this.props;
     const fontSize = 32;
-    const cells = options.reduce(
-      (acc, vals, [row, col]) =>
-        acc.set(row * width + col, {
-          col,
-          emojis: vals.map(val => emojisForRow(row)[val]),
-          row,
-        }),
-      List(),
-    );
-
+    const cells = Options.toCells(options);
     return (
       <View
-        style={[styles.grid, {height: frameWidth}]}
-        onLayout={this.onLayout}>
-        {cells.map(({row, col, emojis}) => (
+        style={[styles.grid, { height: frameWidth }]}
+        onLayout={this.onLayout}
+      >
+        {cells.map(({ row, col, emojis }) => (
           <View
             style={[
               styles.cell,
               {
-                backgroundColor: ['#9ccc65', '#ffa726', '#fdd835', '#29b6f6'][
+                backgroundColor: ["#9ccc65", "#ffa726", "#fdd835", "#29b6f6"][
                   row
                 ],
-                flexBasis: `${(1 / width) * 100}%`,
-              },
+                flexBasis: `${(1 / width) * 100}%`
+              }
             ]}
-            key={`cell-${row}-${col}`}>
-            {emojis.map(({i, char}) => (
+            key={`cell-${row}-${col}`}
+          >
+            {emojis.map(({ i, char }) => (
               <TouchableOpacity
                 style={styles.emojiButon}
                 key={`emoji-${i}`}
-                onPress={this.onEmojiPress(row, col, i)}>
-                <Text style={{fontSize}}>{char}</Text>
+                onPress={this.onEmojiPress(row, col, i)}
+              >
+                <Text style={{ fontSize }}>{char}</Text>
               </TouchableOpacity>
             ))}
           </View>

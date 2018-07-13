@@ -1,19 +1,20 @@
 //@flow
 
-import Grid from './components/Grid';
-import Clue from './components/Clue';
-import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {List, Map, Set} from 'immutable';
-import Options from './options';
-import Puzzle from './puzzle';
+import Grid from "./components/Grid";
+import Clue from "./components/Clue";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { List, Map, Set } from "immutable";
+import Options from "./options";
+import Puzzle from "./puzzle";
+import type { Opts } from "./options";
 
 type State = {
   solution: Map<List<number>, Set<number>>,
-  options: Map<List<number>, Set<number>>,
-  grid: {width: number, height: number},
+  options: Opts,
+  grid: { width: number, height: number },
   clues: List<Map<string, string>>,
-  won: boolean,
+  won: boolean
 };
 
 export default class App extends React.Component<{}, State> {
@@ -21,32 +22,32 @@ export default class App extends React.Component<{}, State> {
     super();
     this.state = {
       clues: List([]),
-      grid: {width: 0, height: 0},
+      grid: { width: 0, height: 0 },
       options: Map([]),
       solution: Map([]),
-      won: false,
+      won: false
     };
   }
   componentDidMount() {
-    Puzzle.fetch({}).then(({width, height, inHouse, clues, solution}) => {
+    Puzzle.fetch({}).then(({ width, height, inHouse, clues, solution }) => {
       this.setState({
         clues,
-        grid: {width, height},
+        grid: { width, height },
         options: Options.init(height, width, inHouse),
-        solution,
+        solution
       });
     });
   }
 
   onClickOption = (row: number, col: number, val: number) => {
-    this.setState(({solution, options, ...state}) => {
+    this.setState(({ solution, options, ...state }) => {
       const updatedOptions = Options.removeVal(options, row, col, val);
 
       return {
         ...state,
         solution,
         won: solution.equals(updatedOptions),
-        options: updatedOptions,
+        options: updatedOptions
       };
     });
   };
@@ -54,7 +55,7 @@ export default class App extends React.Component<{}, State> {
   render() {
     const {
       clues,
-      grid: {width, height},
+      grid: { width, height },
       options,
       won
     } = this.state;
@@ -63,11 +64,11 @@ export default class App extends React.Component<{}, State> {
         {won && <Text>You win, bruh!</Text>}
         <View style={styles.header}>
           {clues.map((clue, i) => (
-            <Clue args={clue.get('args')} type={clue.get('type')} key={i} />
+            <Clue args={clue.get("args")} type={clue.get("type")} key={i} />
           ))}
         </View>
         <Grid
-          {...{width, height, options, onClickOption: this.onClickOption}}
+          {...{ width, height, options, onClickOption: this.onClickOption }}
         />
       </View>
     );
@@ -77,16 +78,16 @@ export default class App extends React.Component<{}, State> {
 const border = borderColor => ({
   borderColor,
   borderWidth: 1,
-  borderStyle: 'solid',
+  borderStyle: "solid"
 });
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    alignItems: "center",
+    backgroundColor: "#fff",
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
+    justifyContent: "center",
+    padding: 20
   },
-  header: {flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20},
+  header: { flexDirection: "row", flexWrap: "wrap", marginBottom: 20 }
 });
