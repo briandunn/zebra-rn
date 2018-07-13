@@ -29,7 +29,7 @@ function parse(body) {
     .sortBy(c => c.get('type'));
 
   const solution = List(get(puzzle, 'solution')).reduce(
-    (acc, [k, v]) => acc.set(List(k), Set([v])),
+    (acc, [[row, item], col]) => acc.set(List([row, col]), Set([item])),
     Map(),
   );
 

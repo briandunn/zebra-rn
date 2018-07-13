@@ -18,12 +18,26 @@ type Opts = Map<List<number>, Set<number>>;
 type Clue = Map<string, Array<number>>;
 
 function applyInHouse(options: Opts, inHouse: List<Clue>) {
-  const map = inHouse.reduce(
-    (map, clue) =>
-      map.set(List(clue.get('args')[0]), Set([clue.get('args')[1]])),
-    Map(),
+  const map = inHouse.reduce((map, clue) => {
+    const [[row, item], col] = clue.get('args');
+    return map.set(List([row, col]), Set([item]));
+  }, Map());
+  return map.reduce(
+    (acc, val, coords) => applyElimination(acc, coords.get(0), coords.get(1)),
+    options.map((opts, args) => map.get(List(args), opts)),
   );
-  return options.map((opts, args) => map.get(List(args), opts));
+}
+
+function applyElimination(options, row, col) {
+  const cell = options.get(List([row, col]));
+  return cell.count() == 1
+    ? options.map(
+        (opts, key) =>
+          key.get(0) === row && key.get(1) !== col
+            ? opts.filter(opt => cell.first() !== opt)
+            : opts,
+      )
+    : options;
 }
 
 export default class Options {
@@ -37,15 +51,6 @@ export default class Options {
       opts => (opts.count() === 1 ? opts : opts.delete(val)),
     );
 
-    const cell = updated.get(List([row, col]));
-
-    if (cell.count() === 1) {
-      return updated.map(
-        (opts, key) =>
-          key.get(0) === row && key.get(1) !== col
-            ? opts.filter(opt => cell.first() !== opt)
-            : opts,
-      );
-    } else return updated;
+    return applyElimination(updated, row, col);
   }
 }

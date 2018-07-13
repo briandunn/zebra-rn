@@ -42,7 +42,7 @@ export default class Grid extends React.Component<Props, {frameWidth: number}> {
     const fontSize = 32;
     const cells = options.reduce(
       (acc, vals, [row, col]) =>
-        acc.set(row * width + (width - col - 1), {
+        acc.set(row * width + col, {
           col,
           emojis: vals.map(val => emojisForRow(row)[val]),
           row,
