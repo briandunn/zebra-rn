@@ -1,6 +1,6 @@
 import Options from "./options";
 import type Opts from "./options";
-import { List, Map } from "immutable";
+import { List, Map, Set } from "immutable";
 
 describe("removeVal", () => {
   function toString(options: Opts) {
@@ -23,8 +23,11 @@ describe("removeVal", () => {
     ) + "\n\n";
   }
   it("recursively eliminates", () => {
-    const inHouse = List([{ row: 0, item: 0, col: 0 }]);
-    const options = Options.init(4, 4, inHouse);
+    let options = Options.init(3, 3, []);
+    options = Options.removeVal(options, 0, 0, 0);
+    options = Options.removeVal(options, 0, 1, 0);
+    options = Options.removeVal(options, 0, 1, 1);
     toString(options);
+    expect(options.get(List([0, 2]))).toEqual(Set([0]));
   });
 });
