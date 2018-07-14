@@ -10,10 +10,10 @@ import Puzzle from "./puzzle";
 import type { Opts } from "./options";
 
 type State = {
-  solution: Map<List<number>, Set<number>>,
+  solution: Opts,
   options: Opts,
   grid: { width: number, height: number },
-  clues: List<Map<string, string>>,
+  clues: List<{ args: any, type: string }>,
   won: boolean
 };
 
@@ -46,6 +46,7 @@ export default class App extends React.Component<{}, State> {
       return {
         ...state,
         solution,
+        //$FlowFixMe
         won: solution.equals(updatedOptions),
         options: updatedOptions
       };
@@ -64,7 +65,7 @@ export default class App extends React.Component<{}, State> {
         {won && <Text>You win, bruh!</Text>}
         <View style={styles.header}>
           {clues.map((clue, i) => (
-            <Clue args={clue.get("args")} type={clue.get("type")} key={i} />
+            <Clue args={clue.args} type={clue.type} key={i} />
           ))}
         </View>
         <Grid

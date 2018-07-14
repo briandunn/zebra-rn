@@ -16,25 +16,27 @@ const buildOptions = (height, width) =>
   );
 
 export type Opts = Map<List<number>, Set<number>>;
+
 type Cell = {
   col: number,
   row: number,
   emojis: Set<{ i: number, char: string }>
 };
-type Clue = Map<string, Array<number>>;
 
-function applyInHouse(options: Opts, inHouse: List<Clue>) {
-  const map = inHouse.reduce((map, clue) => {
-    const [[row, item], col] = clue.get("args");
-    return map.set(List([row, col]), Set([item]));
-  }, Map());
+type InHouse = { row: number, col: number, item: number };
+
+function applyInHouse(options: Opts, inHouse: List<InHouse>) {
+  const map = inHouse.reduce(
+    (map, { row, item, col }) => map.set(List([row, col]), Set([item])),
+    Map()
+  );
   return map.reduce(
     (acc, val, coords) => applyElimination(acc, coords.get(0), coords.get(1)),
     options.map((opts, args) => map.get(List(args), opts))
   );
 }
 
-function applyElimination(options, row, col) {
+function applyElimination(options, row, col): Opts {
   const cell = options.get(List([row, col]));
   return cell.count() == 1
     ? options.map(
@@ -47,7 +49,7 @@ function applyElimination(options, row, col) {
 }
 
 export default class Options {
-  static init(height: number, width: number, inHouse: List<Clue>) {
+  static init(height: number, width: number, inHouse: List<InHouse>) {
     return applyInHouse(buildOptions(height, width), inHouse);
   }
 
@@ -61,15 +63,14 @@ export default class Options {
   }
   static toCells(options: Opts) {
     const width = this.width(options);
-    return options.reduce(
-      (acc, vals, [row, col]) =>
-        acc.set(row * width + col, {
-          col,
-          emojis: vals.map(val => emojisForRow(row)[val]),
-          row
-        }),
-      List()
-    );
+    return options.reduce((acc, vals, k) => {
+      const [row, col] = k.toJS();
+      return acc.set(row * width + col, {
+        col,
+        emojis: vals.map(val => emojisForRow(row)[val]),
+        row
+      });
+    }, List());
   }
 
   static rows(options: Opts): List<List<Cell>> {
@@ -83,9 +84,10 @@ export default class Options {
   }
 
   static width(options: Opts): number {
+    const keys: Array<List<number>> = Array.from(options.keys());
     return (
-      List(options.keys())
-        .map(([row, col]) => col)
+      List(keys)
+        .map(coords => coords.get(1))
         .max() + 1
     );
   }

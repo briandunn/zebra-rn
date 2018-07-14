@@ -23,7 +23,7 @@ describe("removeVal", () => {
     ) + "\n\n";
   }
   it("recursively eliminates", () => {
-    const inHouse = List([Map({ args: [[0, 0], 0] })]);
+    const inHouse = List([{ row: 0, item: 0, col: 0 }]);
     const options = Options.init(4, 4, inHouse);
     toString(options);
   });

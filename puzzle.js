@@ -1,36 +1,42 @@
 // @flow
 
-import {List, Map, Set} from 'immutable';
-import t from 'transit-js';
+import { List, Map, Set, Record } from "immutable";
+import t from "transit-js";
 
 function parse(body) {
   const parseSolution = solution =>
     [...solution.keys()].reduce(
       (map, key) => map.set(List(key), Set([solution.get(key)])),
-      Map(),
+      Map()
     );
   const data = t.reader().read(body);
   const get = (m, k) => m.get(t.keyword(`puzzle/${k}`));
-  const puzzle = get(data, 'puzzle');
-  const grid = get(puzzle, 'grid');
-  const [height, width] = ['height', 'width'].map(k => get(grid, k));
-  const clues = Set(get(puzzle, 'clues'))
+  const puzzle = get(data, "puzzle");
+  const grid = get(puzzle, "grid");
+  const [height, width] = ["height", "width"].map(k => get(grid, k));
+  const clues = Set(get(puzzle, "clues"))
     .map(clue =>
-      Map({
-        type: clue.get(t.keyword('clue/type')).name(),
-        args: clue.get(t.keyword('clue/args')),
-      }),
+      ({
+        ["in-house"]: (type, [[row, item], col]) => ({ row, item, col, type }),
+        ["left-of"]: (type, args) => ({ args, type }),
+        ["next-to"]: (type, args) => ({ args, type }),
+        ["same-house"]: (type, args) => ({ args, type })
+      }[clue.get(t.keyword("clue/type")).name()](
+        clue.get(t.keyword("clue/type")).name(),
+        clue.get(t.keyword("clue/args"))
+      ))
     )
-    .groupBy(c => c.get('type'));
+    .groupBy(c => c.type)
+    .toMap();
 
-  const inHouse = clues.get('in-house');
-  const otherClues = List(clues.delete('in-house').values())
+  const inHouse = clues.get("in-house");
+  const otherClues = List(clues.delete("in-house").values())
     .reduce((list, clues) => list.concat(clues), List())
-    .sortBy(c => c.get('type'));
+    .sortBy(c => c.type);
 
-  const solution = List(get(puzzle, 'solution')).reduce(
+  const solution = List(get(puzzle, "solution")).reduce(
     (acc, [[row, item], col]) => acc.set(List([row, col]), Set([item])),
-    Map(),
+    Map()
   );
 
   return {
@@ -38,24 +44,24 @@ function parse(body) {
     height,
     width,
     inHouse,
-    solution,
+    solution
   };
 }
 
-type EnsuredCluesProps = {inHouse: number, leftOf: number, sameHouse: number};
+type EnsuredCluesProps = { inHouse: number, leftOf: number, sameHouse: number };
 
 type ClueWeightsProps = {
   inHouse: number,
   leftOf: number,
   sameHouse: number,
-  nextTo: number,
+  nextTo: number
 };
 
 type ConfigProps = {
   size: number,
   extraClues: number,
   ensuredClues: EnsuredCluesProps,
-  clueWeights: ClueWeightsProps,
+  clueWeights: ClueWeightsProps
 };
 
 function configToBody({
@@ -67,14 +73,14 @@ function configToBody({
     size: 4,
     extraClues: 1,
     ...configuration,
-    ensuredClues: {inHouse: 1, leftOf: 1, sameHouse: 1, ...ensuredClues},
+    ensuredClues: { inHouse: 1, leftOf: 1, sameHouse: 1, ...ensuredClues },
     clueWeights: {
       inHouse: 1,
       leftOf: 1,
       sameHouse: 1,
       nextTo: 1,
-      ...clueWeights,
-    },
+      ...clueWeights
+    }
   };
 
   return t
@@ -82,45 +88,45 @@ function configToBody({
     .write([
       t.list([
         t.map([
-          t.keyword('puzzle/puzzle'),
-          [t.keyword('puzzle/clues'), t.keyword('puzzle/solution')],
+          t.keyword("puzzle/puzzle"),
+          [t.keyword("puzzle/clues"), t.keyword("puzzle/solution")]
         ]),
         t.map([
-          t.keyword('size'),
+          t.keyword("size"),
           config.size,
-          t.keyword('clue-weights'),
+          t.keyword("clue-weights"),
           t.map([
-            t.keyword('in-house'),
+            t.keyword("in-house"),
             config.clueWeights.inHouse,
-            t.keyword('left-of'),
+            t.keyword("left-of"),
             config.clueWeights.leftOf,
-            t.keyword('next-to'),
+            t.keyword("next-to"),
             config.clueWeights.nextTo,
-            t.keyword('same-house'),
-            config.clueWeights.sameHouse,
+            t.keyword("same-house"),
+            config.clueWeights.sameHouse
           ]),
-          t.keyword('extra-clues'),
+          t.keyword("extra-clues"),
           config.extraClues,
-          t.keyword('ensured-clues'),
+          t.keyword("ensured-clues"),
           t.map([
-            t.keyword('in-house'),
+            t.keyword("in-house"),
             config.ensuredClues.inHouse,
-            t.keyword('left-of'),
+            t.keyword("left-of"),
             config.ensuredClues.leftOf,
-            t.keyword('same-house'),
-            config.ensuredClues.sameHouse,
-          ]),
-        ]),
-      ]),
+            t.keyword("same-house"),
+            config.ensuredClues.sameHouse
+          ])
+        ])
+      ])
     ]);
 }
 
 export default class Puzzle {
   static fetch(config: any) {
-    return fetch('https://zebra.joshuadavey.com/api', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/transit+json'},
-      body: configToBody(config),
+    return fetch("https://zebra.joshuadavey.com/api", {
+      method: "POST",
+      headers: { "Content-Type": "application/transit+json" },
+      body: configToBody(config)
     })
       .then(response => response.text())
       .then(parse);
