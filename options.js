@@ -1,4 +1,4 @@
-//@flow
+// @flow
 
 import { List, Map, Set } from "immutable";
 import emojisForRow from "./domain";
@@ -31,21 +31,49 @@ function applyInHouse(options: Opts, inHouse: List<InHouse>) {
     Map()
   );
   return map.reduce(
-    (acc, val, coords) => applyElimination(acc, coords.get(0), coords.get(1)),
+    (acc, val, coords) => applyElimination(acc, coords.get(0)),
     options.map((opts, args) => map.get(List(args), opts))
   );
 }
 
-function applyElimination(options, row, col): Opts {
-  const cell = options.get(List([row, col]));
-  return cell.count() == 1
-    ? options.map(
-        (opts, key) =>
-          key.get(0) === row && key.get(1) !== col
-            ? opts.filter(opt => cell.first() !== opt)
-            : opts
-      )
-    : options;
+function mapRow(options, row, cb) {
+  const rowCells = options.reduce(
+    (list, vals, key) =>
+      key.get(0) === row ? list.set(key.get(1), vals) : list,
+    List()
+  );
+  const mappedRow = cb(rowCells);
+  return mappedRow.reduce(
+    (opts, cell, col) => opts.set(List([row, col]), cell),
+    options
+  );
+}
+
+function applyElimination(options, rowNumber): Opts {
+  return mapRow(options, rowNumber, row => {
+    const settle = cells => {
+      const settled = cells.filter(({ vals }) => vals.count() === 1);
+
+      if (settled.count() === 0) return cells;
+
+      const unsettled = cells.filter(({ vals }) => vals.count() > 1);
+
+      const settledSet = settled.reduce((s, { vals }) => s.union(vals), Set());
+
+      return settled.concat(
+        settle(
+          unsettled.map(({ vals, col }) => ({
+            col,
+            vals: vals.subtract(settledSet)
+          }))
+        )
+      );
+    };
+
+    return settle(row.map((vals, col) => ({ vals, col })))
+      .sortBy(({ col }) => col)
+      .map(({ vals }) => vals);
+  });
 }
 
 export default class Options {
@@ -59,7 +87,7 @@ export default class Options {
       opts => (opts.count() === 1 ? opts : opts.delete(val))
     );
 
-    return applyElimination(updated, row, col);
+    return applyElimination(updated, row);
   }
   static toCells(options: Opts) {
     const width = this.width(options);
