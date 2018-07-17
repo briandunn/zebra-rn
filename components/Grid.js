@@ -41,7 +41,6 @@ export default class Grid extends React.Component<
   render() {
     const { frameWidth } = this.state;
     const { width, height, options } = this.props;
-    const fontSize = 32;
     const cells = Options.toCells(options);
     return (
       <View
@@ -67,7 +66,9 @@ export default class Grid extends React.Component<
                 key={`emoji-${i}`}
                 onPress={this.onEmojiPress(row, col, i)}
               >
-                <Text style={{ fontSize }}>{char}</Text>
+                <Text style={{ fontSize: emojis.count() === 1 ? 64 : 32 }}>
+                  {char}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
