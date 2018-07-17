@@ -3,7 +3,7 @@
 import Grid from "./components/Grid";
 import Clue from "./components/Clue";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View, Button } from "react-native";
 import { List, Map, Set } from "immutable";
 import Options from "./options";
 import Puzzle from "./puzzle";
@@ -14,7 +14,8 @@ type State = {
   options: Opts,
   grid: { width: number, height: number },
   clues: List<{ args: any, type: string }>,
-  won: boolean
+  won: boolean,
+  history: List<Opts>
 };
 
 export default class App extends React.Component<{}, State> {
@@ -25,22 +26,34 @@ export default class App extends React.Component<{}, State> {
       grid: { width: 0, height: 0 },
       options: Map([]),
       solution: Map([]),
-      won: false
+      won: false,
+      history: List([])
     };
   }
   componentDidMount() {
+    this.reset();
+  }
+
+  undo = () => {
+    const history = this.state.history.pop();
+    if (!history.isEmpty()) this.setState({ options: history.last(), history });
+  };
+
+  reset = () => {
     Puzzle.fetch({}).then(({ width, height, inHouse, clues, solution }) => {
+      const options = Options.init(height, width, inHouse);
       this.setState({
         clues,
         grid: { width, height },
-        options: Options.init(height, width, inHouse),
-        solution
+        options,
+        solution,
+        history: List([options])
       });
     });
-  }
+  };
 
   onClickOption = (row: number, col: number, val: number) => {
-    this.setState(({ solution, options, ...state }) => {
+    this.setState(({ solution, options, history, ...state }) => {
       const updatedOptions = Options.removeVal(options, row, col, val);
 
       return {
@@ -48,7 +61,11 @@ export default class App extends React.Component<{}, State> {
         solution,
         //$FlowFixMe
         won: solution.equals(updatedOptions),
-        options: updatedOptions
+        options: updatedOptions,
+        //$FlowFixMe
+        history: updatedOptions.equals(options)
+          ? history
+          : history.push(updatedOptions)
       };
     });
   };
@@ -64,6 +81,8 @@ export default class App extends React.Component<{}, State> {
       <View style={styles.container}>
         {won && <Text>You win, bruh!</Text>}
         <View style={styles.header}>
+          <Button title="Reset" onPress={this.reset} />
+          <Button title="Undo" onPress={this.undo} />
           {clues.map((clue, i) => (
             <Clue args={clue.args} type={clue.type} key={i} />
           ))}
