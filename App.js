@@ -14,7 +14,6 @@ type State = {
   options: Opts,
   grid: { width: number, height: number },
   clues: List<{ args: any, type: string }>,
-  won: boolean,
   history: List<Opts>
 };
 
@@ -26,7 +25,6 @@ export default class App extends React.Component<{}, State> {
       grid: { width: 0, height: 0 },
       options: Map([]),
       solution: Map([]),
-      won: false,
       history: List([])
     };
   }
@@ -53,14 +51,11 @@ export default class App extends React.Component<{}, State> {
   };
 
   onClickOption = (row: number, col: number, val: number) => {
-    this.setState(({ solution, options, history, ...state }) => {
+    this.setState(({ options, history, ...state }) => {
       const updatedOptions = Options.removeVal(options, row, col, val);
 
       return {
         ...state,
-        solution,
-        //$FlowFixMe
-        won: solution.equals(updatedOptions),
         options: updatedOptions,
         //$FlowFixMe
         history: updatedOptions.equals(options)
@@ -70,16 +65,21 @@ export default class App extends React.Component<{}, State> {
     });
   };
 
+  get won() {
+    const { options, solution } = this.state;
+    //$FlowFixMe
+    return options.equals(solution);
+  }
+
   render() {
     const {
       clues,
       grid: { width, height },
-      options,
-      won
+      options
     } = this.state;
     return (
       <View style={styles.container}>
-        {won && <Text>You win, bruh!</Text>}
+        {this.won && <Text>You win, bruh!</Text>}
         <View style={styles.header}>
           <Button title="Reset" onPress={this.reset} />
           <Button title="Undo" onPress={this.undo} />
