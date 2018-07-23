@@ -2,6 +2,7 @@
 
 import { List, Map, Set } from "immutable";
 import emojisForRow from "./domain";
+import { type InHouse } from "./puzzle";
 
 const times = n => [...Array(n)].map((_, i) => i);
 
@@ -23,9 +24,7 @@ type Cell = {
   emojis: Set<{ i: number, char: string }>
 };
 
-type InHouse = { row: number, col: number, item: number };
-
-function applyInHouse(options: Opts, inHouse: List<InHouse>) {
+function applyInHouse(options: Opts, inHouse: Set<InHouse>) {
   const map = inHouse.reduce(
     (map, { row, item, col }) => map.set(List([row, col]), Set([item])),
     Map()
@@ -77,7 +76,7 @@ function applyElimination(options, rowNumber): Opts {
 }
 
 export default class Options {
-  static init(height: number, width: number, inHouse: List<InHouse>) {
+  static init(height: number, width: number, inHouse: Set<InHouse>) {
     return applyInHouse(buildOptions(height, width), inHouse);
   }
 

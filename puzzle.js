@@ -2,6 +2,37 @@
 
 import { List, Map, Set, Record } from "immutable";
 import t from "transit-js";
+import { type Opts } from "./options";
+
+export type InHouse = {
+  col: number,
+  item: number,
+  row: number,
+  type: string
+};
+
+type Clue = {
+  args: Array<Array<number>>,
+  type: string
+};
+
+const dificulties = {
+  beginner: {
+    extraClues: 2,
+    clueWeights: { inHouse: 1.2, leftOf: 1, nextTo: 0, sameHouse: 1.3 },
+    ensuredClues: { inHouse: 1, sameHouse: 2, leftOf: 1 }
+  },
+  normal: {
+    extraClues: 1,
+    clueWeights: { inHouse: 1, leftOf: 1, nextTo: 1, sameHouse: 1 },
+    ensuredClues: { inHouse: 1, sameHouse: 1, leftOf: 1 }
+  },
+  expert: {
+    extraClues: 0,
+    clueWeights: { inHouse: 0.9, leftOf: 1.1, nextTo: 1.2, sameHouse: 1.1 },
+    ensuredClues: { inHouse: 0, sameHouse: 1, leftOf: 1 }
+  }
+};
 
 function parse(body) {
   const parseSolution = solution =>
@@ -29,7 +60,7 @@ function parse(body) {
     .groupBy(c => c.type)
     .toMap();
 
-  const inHouse = clues.get("in-house");
+  const inHouse = clues.get("in-house", List([]));
   const otherClues = List(clues.delete("in-house").values())
     .reduce((list, clues) => list.concat(clues), List())
     .sortBy(c => c.type);
@@ -50,37 +81,15 @@ function parse(body) {
 
 type EnsuredCluesProps = { inHouse: number, leftOf: number, sameHouse: number };
 
-type ClueWeightsProps = {
-  inHouse: number,
-  leftOf: number,
-  sameHouse: number,
-  nextTo: number
-};
-
 type ConfigProps = {
   size: number,
-  extraClues: number,
-  ensuredClues: EnsuredCluesProps,
-  clueWeights: ClueWeightsProps
+  skill: string
 };
 
-function configToBody({
-  ensuredClues,
-  clueWeights,
-  ...configuration
-}: ConfigProps) {
+function configToBody({ skill, size }: ConfigProps) {
   const config = {
-    size: 4,
-    extraClues: 1,
-    ...configuration,
-    ensuredClues: { inHouse: 1, leftOf: 1, sameHouse: 1, ...ensuredClues },
-    clueWeights: {
-      inHouse: 1,
-      leftOf: 1,
-      sameHouse: 1,
-      nextTo: 1,
-      ...clueWeights
-    }
+    size,
+    ...dificulties[skill]
   };
 
   return t
@@ -122,7 +131,13 @@ function configToBody({
 }
 
 export default class Puzzle {
-  static fetch(config: any) {
+  clues: List<Clue>;
+  height: number;
+  inHouse: Set<InHouse>;
+  solution: Opts;
+  width: number;
+
+  static fetch(config: ConfigProps): Promise<Puzzle> {
     return fetch("https://zebra.joshuadavey.com/api", {
       method: "POST",
       headers: { "Content-Type": "application/transit+json" },
