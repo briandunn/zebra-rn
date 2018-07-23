@@ -81,7 +81,7 @@ function parse(body) {
 
 type EnsuredCluesProps = { inHouse: number, leftOf: number, sameHouse: number };
 
-type ConfigProps = {
+export type ConfigProps = {
   size: number,
   skill: string
 };
