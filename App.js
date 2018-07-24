@@ -31,7 +31,9 @@ export default class App extends React.Component<{}, State> {
 
     return (
       <View style={styles.container}>
-        <Button title="New" onPress={this.showNewForm} />
+        {this.state.route === "game" && (
+          <Button title="New" onPress={this.showNewForm} />
+        )}
         {routes[this.state.route]}
       </View>
     );

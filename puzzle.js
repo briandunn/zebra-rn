@@ -136,6 +136,7 @@ export default class Puzzle {
   inHouse: Set<InHouse>;
   solution: Opts;
   width: number;
+  skill: string;
 
   static fetch(config: ConfigProps): Promise<Puzzle> {
     return fetch("https://zebra.joshuadavey.com/api", {
@@ -144,6 +145,7 @@ export default class Puzzle {
       body: configToBody(config)
     })
       .then(response => response.text())
-      .then(parse);
+      .then(parse)
+      .then(puzzle => ({ ...puzzle, skill: config.skill }));
   }
 }

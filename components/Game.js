@@ -58,11 +58,12 @@ export default class Game extends React.Component<Props, State> {
   render() {
     const { options } = this.state;
     const {
-      puzzle: { clues, width, height }
+      puzzle: { clues, width, height, skill }
     } = this.props;
     return (
       <React.Fragment>
         <View style={styles.header}>
+          <Text>{skill}</Text>
           {this.won && <Text>You win, bruh!</Text>}
           <Button title="Undo" onPress={this.undo} />
           {clues.map((clue, i) => (
