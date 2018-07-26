@@ -4,25 +4,32 @@ import { List, Map, Set } from "immutable";
 import { LayoutAnimation, StyleSheet, Text, View, Button } from "react-native";
 
 import Grid from "./Grid";
-import Clue from "./Clue";
+import ClueComponent from "./Clue";
 import Options, { type Opts } from "../options";
-import type Puzzle from "../puzzle";
+import type Puzzle, { Clue } from "../puzzle";
 
 type State = {
   history: List<Opts>,
   options: Opts,
   startedAt: Date,
   undoCount: number,
-  wonAt?: Date
+  wonAt?: Date,
+  appliedClues: List<Clue>
 };
 
 type Props = { puzzle: Puzzle };
+
+const toggle = (list: List<Clue>, item: Clue): List<Clue> =>
+  list.includes(item)
+    ? list.filter(i => !(i.type === item.type && i.args === item.args))
+    : list.push(item);
 
 export default class Game extends React.Component<Props, State> {
   constructor({ puzzle: { height, width, inHouse } }: Props) {
     super();
     const options = Options.init(height, width, inHouse);
     this.state = {
+      appliedClues: List([]),
       history: List([options]),
       options,
       startedAt: new Date(),
@@ -62,6 +69,22 @@ export default class Game extends React.Component<Props, State> {
     });
   };
 
+  get duration() {
+    if (this.state.wonAt) {
+      const ms = this.state.wonAt - this.state.startedAt;
+      return ms / 1000;
+    }
+  }
+
+  onPressClue = (clue: Clue) => () => {
+    this.setState(({ appliedClues, ...state }) => ({
+      ...state,
+      appliedClues: toggle(appliedClues, clue)
+    }));
+  };
+
+  isAppliedClue = (clue: Clue) => this.state.appliedClues.includes(clue);
+
   render() {
     const { options } = this.state;
     const {
@@ -69,16 +92,18 @@ export default class Game extends React.Component<Props, State> {
     } = this.props;
     return (
       <React.Fragment>
-        <View style={styles.header}>
-          <Text>{skill}</Text>
-          {this.state.wonAt && (
-            <Text>
-              You won in {this.state.wonAt - this.state.startedAt}s, bruh!
-            </Text>
-          )}
-          <Button title="Undo" onPress={this.undo} />
+        <Text>{skill}</Text>
+        {this.state.wonAt && <Text>You won in {this.duration}s, bruh!</Text>}
+        <Button title="Undo" onPress={this.undo} />
+        <View style={styles.clues}>
           {clues.map((clue, i) => (
-            <Clue args={clue.args} type={clue.type} key={i} />
+            <ClueComponent
+              args={clue.args}
+              type={clue.type}
+              key={i}
+              onPress={this.onPressClue(clue)}
+              applied={this.isAppliedClue(clue)}
+            />
           ))}
         </View>
         <Grid
@@ -90,5 +115,5 @@ export default class Game extends React.Component<Props, State> {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", flexWrap: "wrap", marginBottom: 20 }
+  clues: { flexDirection: "row", flexWrap: "wrap", marginBottom: 20 }
 });

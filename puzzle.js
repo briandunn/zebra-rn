@@ -11,7 +11,7 @@ export type InHouse = {
   type: string
 };
 
-type Clue = {
+export type Clue = {
   args: Array<Array<number>>,
   type: string
 };
