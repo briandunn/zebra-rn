@@ -9,8 +9,11 @@ import Options, { type Opts } from "../options";
 import type Puzzle from "../puzzle";
 
 type State = {
+  history: List<Opts>,
   options: Opts,
-  history: List<Opts>
+  startedAt: Date,
+  undoCount: number,
+  wonAt?: Date
 };
 
 type Props = { puzzle: Puzzle };
@@ -20,14 +23,22 @@ export default class Game extends React.Component<Props, State> {
     super();
     const options = Options.init(height, width, inHouse);
     this.state = {
+      history: List([options]),
       options,
-      history: List([options])
+      startedAt: new Date(),
+      undoCount: 0
     };
   }
 
   undo = () => {
     const history = this.state.history.pop();
-    if (!history.isEmpty()) this.setState({ options: history.last(), history });
+    if (!history.isEmpty()) {
+      this.setState({
+        options: history.last(),
+        history,
+        undoCount: this.state.undoCount + 1
+      });
+    }
   };
 
   onClickOption = (row: number, col: number, val: number) => {
@@ -35,25 +46,21 @@ export default class Game extends React.Component<Props, State> {
     this.setState(({ options, history, ...state }) => {
       const updatedOptions = Options.removeVal(options, row, col, val);
 
-      return {
-        ...state,
-        options: updatedOptions,
-        //$FlowFixMe
-        history: updatedOptions.equals(options)
-          ? history
-          : history.push(updatedOptions)
-      };
+      if (!updatedOptions.equals(options)) {
+        const {
+          puzzle: { solution }
+        } = this.props;
+
+        return {
+          ...state,
+          options: updatedOptions,
+          history: history.push(updatedOptions),
+          wonAt: updatedOptions.equals(solution) ? new Date() : undefined
+        };
+      }
+      return state;
     });
   };
-
-  get won() {
-    const { options } = this.state;
-    const {
-      puzzle: { solution }
-    } = this.props;
-    //$FlowFixMe
-    return options.equals(solution);
-  }
 
   render() {
     const { options } = this.state;
@@ -64,7 +71,11 @@ export default class Game extends React.Component<Props, State> {
       <React.Fragment>
         <View style={styles.header}>
           <Text>{skill}</Text>
-          {this.won && <Text>You win, bruh!</Text>}
+          {this.state.wonAt && (
+            <Text>
+              You won in {this.state.wonAt - this.state.startedAt}s, bruh!
+            </Text>
+          )}
           <Button title="Undo" onPress={this.undo} />
           {clues.map((clue, i) => (
             <Clue args={clue.args} type={clue.type} key={i} />
